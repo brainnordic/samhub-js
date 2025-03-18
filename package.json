@@ -1,0 +1,22 @@
+{
+  "name": "samhub.js",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "rimraf dist && npm run build:esm && npm run build:iife",
+    "build:esm": "esbuild src/index.ts --bundle --platform=browser --format=esm --outfile=dist/samhub.esm.js",
+    "build:iife": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=Samhub --outfile=dist/samhub.js --minify",
+    "prepublishOnly": "npm run build"
+  },
+  "type": "module",
+  "main": "dist/samhub.js",
+  "module": "dist/samhub.esm.js",
+  "browser": "dist/samhub.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}
