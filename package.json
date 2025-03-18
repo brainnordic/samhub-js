@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "rimraf dist && npm run build:esm && npm run build:iife",
-    "build:esm": "esbuild src/index.ts --bundle --platform=browser --format=esm --outfile=dist/samhub.esm.js",
-    "build:iife": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=Samhub --outfile=dist/samhub.js --minify",
+    "lint": "eslint 'src/**/*.{js,ts}'",
+    "lint:fix": "eslint 'src/**/*.{js,ts}' --fix",
+    "build": "npm run lint && rm -rf dist && npm run build:esm && npm run build:iife",
+    "build:esm": "esbuild src/index.ts --bundle --platform=browser --format=esm --define:process.env.VERSION=\\\"$npm_package_version\\\" --outfile=dist/samhub.esm.js",
+    "build:iife": "esbuild src/index.ts --bundle --platform=browser --format=iife --define:process.env.VERSION=\\\"$npm_package_version\\\" --global-name=Samhub --outfile=dist/samhub.js --minify",
     "prepublishOnly": "npm run build"
   },
   "type": "module",
@@ -16,7 +18,19 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.13.10",
-    "typescript": "^5.8.2"
+    "@types/qs": "^6.9.18",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
+  },
+  "dependencies": {
+    "js-cookie": "^3.0.5",
+    "qs": "^6.14.0",
+    "uuid": "^11.1.0"
   }
 }
