@@ -69,6 +69,53 @@ tracker.track("purchase", {
 }) // track custom event
 ```
 
+## UserId cookie
+
+By default SDK uses first party UUID cookie to track users. The cookie is set to expire in 365 days.
+
+- cookie_name: samhub
+- cookie_expires: 365 days
+
+You may want to change cookie storage to localStorage instead. With constructor option:
+
+```js
+ window.samhubData=window.samhubData || [];
+  window.samhubData.push(["init", "data-container-id", {
+    auto_track_user_id: 'localstorage'
+  }])
+```
+
+You may also want to disable cookie storage completely and provide user id manually:
+
+```js
+ window.samhubData=window.samhubData || [];
+  window.samhubData.push(["init", "data-container-id", {
+    auto_track_user_id: 'none'
+  }])
+  window.samhubData.push(["track", "pageView", {
+    user_id: "123abc456def"
+  }])
+```
+
+
+## CSP - content security policy
+
+Browser installation requires [CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) to be configured.
+As SDK by default uses loading 1x1 pixel image as data protocol, you need to allow it in your CSP policy.
+
+```js
+imgSrc 'self' https://track.samhub.io;
+```
+
+**Notice**: If you're using custom tracking domain, you need to allow it as well.
+
+
+## External dependencies
+
+- [uuid](https://github.com/uuidjs/uuid) - used to generate user id (until disabled)
+- [qs](https://github.com/ljharb/qs) - used to serialize pixel data
+- [js-cookie](https://github.com/js-cookie/js-cookie) - used to store user id in cookie (until disabled)
+
 ## API Reference
 
 ---
