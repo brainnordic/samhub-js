@@ -1,14 +1,9 @@
 # Samhub JavaScript SDK
 
 ## Overview
-Samhub is a simple, lightweight JavaScript SDK designed to interact with the MyAPI service. This SDK supports both modern JavaScript module bundlers (like Webpack, Rollup) and traditional browser-based `<script>` tags.
+Samhub.js is a simple, lightweight JavaScript SDK designed to interact with the Samhub tracking API. This SDK supports both modern JavaScript module bundlers (like Webpack, Rollup) and traditional browser-based `<script>` tags.
 
-## Features
-- **Versioning**: Dynamically pulls the version from the `package.json`.
-- **Multiple export formats**: Supports both **ESM** for module bundlers and **IIFE** for traditional `<script>` tag usage.
-- **Easy-to-use API**: Fetch data from the API with ease.
-
-## Installation
+## Installation options
 
 ### 1. Install via NPM
 ```bash
@@ -18,11 +13,13 @@ npm install samhub.js
 ### 2. Include via CDN
 You can directly use the SDK from a CDN in a browser:
 ```html
-<script src="https://cdn.example.com/samhub.js"></script>
-<script>
-  const sdk = new SamhubNamespace.Samhub("your-api-key");
-  sdk.fetchData("users").then(console.log);
-</script>
+<script async src="https://cdn.jsdelivr.net/npm/samhub.js@1.0.0/dist/samhub.js"></script>
+```
+
+### 3. Host sdk on your server
+If your security requirements doesn't allow to load external resources, you may include compiled samhub.js copy from your server.
+```html
+<script async src="dist/samhub.js"></script>
 ```
 
 ## Usage
@@ -30,12 +27,26 @@ You can directly use the SDK from a CDN in a browser:
 ### In Browser (Using IIFE format)
 If you're using the **IIFE** format in the browser (via `<script>`):
 ```html
-<script src="dist/samhub.js"></script>
+<script async src="dist/samhub.js"></script>
 <script>
-  const sdk = new SamhubNamespace.Samhub("your-api-key");
-  sdk.fetchData("users").then(console.log);
+  window.samhubData=window.samhubData || [];
+  window.samhubData.push(["init", "data-container-id"])
+  window.samhubData.push(["track", "pageView"]) // track standard page view event
 
-  console.log(SamhubNamespace.VERSION); // Logs: "1.0.0"
+  window.samhubData.push(["track", "pageView", {
+    url: 'http://example.com/page/about?utm_campaign=newsletter_summer',
+    user_id: CRM.curent_user_id
+  }]) // track page view with custom data
+
+  window.samhubData.push(["track", "purchase", {
+    user_id: "123abc456def",
+    timestamp: 1742403361177,
+    ced: {
+      conversion_value: 150.0,
+      conversion_currency: "USD"
+      user_segment: "premium"
+    }
+  }]) // track custom event
 </script>
 ```
 
@@ -44,31 +55,21 @@ If you're using a module bundler like Webpack, Rollup, or just modern JavaScript
 ```js
 import { Samhub, VERSION } from 'samhub.js';
 
-const sdk = new Samhub("your-api-key");
-sdk.fetchData("users").then(console.log);
+const sdk = new Samhub("data-container-id");
+tracker.track('pageView') // track standard page view event
 
-console.log(VERSION); // Logs: "1.0.0"
+tracker.track("purchase", {
+  user_id: "123abc456def",
+  timestamp: 1742403361177,
+  ced: {
+    conversion_value: 150.0,
+    conversion_currency: "USD"
+    user_segment: "premium"
+  }
+}) // track custom event
 ```
 
 ## API Reference
-
-### `new Samhub(apiKey: string)`
-The constructor for initializing the SDK.
-
-#### Parameters:
-- `apiKey` (string): Your API key for accessing MyAPI.
-
-### `sdk.fetchData(endpoint: string)`
-Fetches data from a specific endpoint on MyAPI.
-
-#### Parameters:
-- `endpoint` (string): The API endpoint you want to query.
-
-#### Returns:
-- A `Promise` that resolves to the data from the API.
-
-### `Samhub.VERSION`
-The current version of the SDK, pulled from `package.json`.
 
 ---
 

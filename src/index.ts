@@ -1,9 +1,9 @@
 export const VERSION = process.env.VERSION;
 import Pixel from "./pixel";
 import DataLayer from "./datalayer";
-import Api from "./api";
+import Tracker from "./tracker";
 
-const Samhub = { Pixel, VERSION, DataLayer, Api };
+const Samhub = { Pixel, VERSION, DataLayer, Tracker };
 export default Samhub;
 
-export { Pixel, DataLayer, Api };
+export { Pixel, DataLayer, Tracker };

@@ -2432,15 +2432,68 @@ var require_lib = __commonJS({
 // src/pixel.ts
 var import_qs = __toESM(require_lib(), 1);
 var Pixel = class {
-  constructor(apiUrl) {
+  constructor(apiUrl, containerId, debug) {
+    this.containerId = containerId;
     this.apiUrl = apiUrl;
+    this.debugAdapter = debug;
+    this.debug("init", this.apiUrl, this.containerId);
   }
   send(data, callback) {
     const pixel = new Image();
     if (callback) {
       pixel.onload = callback;
     }
-    pixel.src = this.apiUrl + "?" + import_qs.default.stringify(data);
+    const pixel_data = this.preparePixelData(data);
+    this.debug("send", pixel_data);
+    pixel.src = this.apiUrl + "?" + import_qs.default.stringify(pixel_data);
+  }
+  preparePixelData(eventData) {
+    if (!eventData.user_id) {
+      throw new Error("user_id is required");
+    }
+    const pixel = {
+      n: this.containerId,
+      u: eventData.user_id
+    };
+    if (eventData.path) {
+      pixel.p = eventData.path;
+    }
+    if (eventData.host) {
+      pixel.h = eventData.host;
+    }
+    if (eventData.utm_source) {
+      pixel.us = eventData.utm_source;
+    }
+    if (eventData.utm_medium) {
+      pixel.um = eventData.utm_medium;
+    }
+    if (eventData.utm_campaign) {
+      pixel.uc = eventData.utm_campaign;
+    }
+    if (eventData.referrer) {
+      pixel.r = eventData.referrer;
+    }
+    if (eventData.timestamp) {
+      pixel.t = eventData.timestamp;
+    }
+    if (eventData.event_id) {
+      pixel.e = eventData.event_id;
+    }
+    if (eventData.zipcode) {
+      pixel.z = eventData.zipcode;
+    }
+    if (eventData.ip) {
+      pixel.i = eventData.ip;
+    }
+    if (eventData.ced) {
+      pixel.ced = JSON.stringify(eventData.ced);
+    }
+    return pixel;
+  }
+  debug(message, ...args) {
+    if (this.debugAdapter) {
+      this.debugAdapter("[Samhub.js->Pixel] " + message, ...args);
+    }
   }
 };
 
@@ -2641,53 +2694,85 @@ function init(converter, defaultAttributes) {
 }
 var api = init(defaultConverter, { path: "/" });
 
-// src/api.ts
-var Api = class {
-  constructor(containerId, user_id, api_url) {
+// src/tracker.ts
+var API_URL = "https://track.samhub.io/v1/e.gif";
+var Tracker = class {
+  constructor(containerId, options = {}) {
     this.containerId = containerId;
-    this.api_url = api_url || "https://api.samhub.io/v1";
-    this.user_id = user_id || this.samhubUserId();
+    this.options = {
+      api_url: API_URL,
+      auto_track_user_id: "cookie",
+      auto_track_referrer: true,
+      auto_track_url: true,
+      ...options
+    };
+    this.debug("init", this.options);
   }
-  pageView(eventData = {}) {
-    eventData.visit_id ||= v4_default();
-    this.setEventDefaults(eventData);
-    this.event("page_view", eventData);
+  track(eventName, eventData) {
+    const data = { ...eventData };
+    this.setEventDefaults(data);
+    this.debug("track", eventName, this.containerId, data);
+    const pixel = new Pixel(this.options.api_url || API_URL, this.containerId, this.options.debug);
+    pixel.send(data);
   }
-  event(eventName, data) {
-    data.timestamp = Date.now();
-    data.user_id = this.user_id;
-    data.container_id = this.containerId;
-    console.log("event", this.api_url, eventName, data);
+  debug(message, ...args) {
+    if (this.options.debug) {
+      this.options.debug("[Samhub.js->Tracker] " + message, ...args);
+    }
   }
   setEventDefaults(eventData) {
-    this.setUrl(eventData, eventData.url ? eventData.url : window.location.href);
-    eventData.referrer ||= document.referrer;
+    if (this.options.auto_track_url) {
+      eventData.url ||= window.location.href;
+    }
+    if (eventData.url) {
+      this.setUrl(eventData, eventData.url);
+      delete eventData.url;
+    }
+    if (this.options.auto_track_user_id === "cookie") {
+      eventData.user_id ||= this.samhubCookieUserId();
+    }
+    if (this.options.auto_track_user_id === "localstorage") {
+      eventData.user_id ||= this.samhubLocalstorageUserId();
+    }
+    if (this.options.auto_track_referrer && !eventData.referrer && document.referrer) {
+      eventData.referrer = document.referrer.split("?")[0];
+    }
+    eventData.timestamp ||= Date.now();
+    eventData.event_id ||= v4_default();
   }
-  samhubUserId() {
+  samhubCookieUserId() {
     const user_id = api.get("samhub") || v4_default();
     api.set("samhub", user_id, { expires: 365 });
+    return user_id;
+  }
+  samhubLocalstorageUserId() {
+    const user_id = localStorage.getItem("samhub") || v4_default();
+    localStorage.setItem("samhub", user_id);
     return user_id;
   }
   setUrl(eventData, url) {
     const parsedUrl = new URL(url);
     eventData.path ||= parsedUrl.pathname;
     eventData.host ||= parsedUrl.host;
-    ["utm_source", "utm_medium", "utm_campaign"].forEach((param) => {
-      if (parsedUrl.searchParams.has(param)) {
-        eventData[param] ||= parsedUrl.searchParams.get(param);
-      }
-    });
+    this.setUtm(eventData, parsedUrl, "utm_source");
+    this.setUtm(eventData, parsedUrl, "utm_medium");
+    this.setUtm(eventData, parsedUrl, "utm_campaign");
+  }
+  setUtm(eventData, parsedUrl, utm_param) {
+    const value = parsedUrl.searchParams.get(utm_param);
+    if (!value) return;
+    eventData[utm_param] ||= value;
   }
 };
 
 // src/index.ts
 var VERSION = "1.0.0";
-var Samhub = { Pixel, VERSION, DataLayer, Api };
+var Samhub = { Pixel, VERSION, DataLayer, Tracker };
 var index_default = Samhub;
 export {
-  Api,
   DataLayer,
   Pixel,
+  Tracker,
   VERSION,
   index_default as default
 };
