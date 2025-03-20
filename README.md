@@ -43,7 +43,7 @@ If you're using the **IIFE** format in the browser (via `<script>`):
     timestamp: 1742403361177,
     ced: {
       conversion_value: 150.0,
-      conversion_currency: "USD"
+      conversion_currency: "USD",
       user_segment: "premium"
     }
   }]) // track custom event
@@ -63,7 +63,7 @@ tracker.track("purchase", {
   timestamp: 1742403361177,
   ced: {
     conversion_value: 150.0,
-    conversion_currency: "USD"
+    conversion_currency: "USD",
     user_segment: "premium"
   }
 }) // track custom event
@@ -79,7 +79,7 @@ By default SDK uses first party UUID cookie to track users. The cookie is set to
 You may want to change cookie storage to localStorage instead. With constructor option:
 
 ```js
- window.samhubData=window.samhubData || [];
+  window.samhubData=window.samhubData || [];
   window.samhubData.push(["init", "data-container-id", {
     auto_track_user_id: 'localstorage'
   }])
@@ -88,7 +88,7 @@ You may want to change cookie storage to localStorage instead. With constructor 
 You may also want to disable cookie storage completely and provide user id manually:
 
 ```js
- window.samhubData=window.samhubData || [];
+  window.samhubData=window.samhubData || [];
   window.samhubData.push(["init", "data-container-id", {
     auto_track_user_id: 'none'
   }])
