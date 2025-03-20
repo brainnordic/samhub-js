@@ -2508,23 +2508,23 @@ var DataLayer = class {
     const originalPush = this.dataLayer.push;
     this.dataLayer.push = (...args) => {
       const result = originalPush.apply(this.dataLayer, args);
-      if (Array.isArray(args[0]) && args[0].length === 2) {
-        const [eventName, eventParams] = args[0];
-        this.triggerListeners(eventName, eventParams);
+      if (Array.isArray(args[0]) && args[0].length > 0) {
+        const [eventName, ...eventParams] = args[0];
+        this.triggerListeners(eventName, ...eventParams);
       }
       return result;
     };
     this.dataLayer.forEach((event) => {
-      if (Array.isArray(event) && event.length === 2) {
-        const [eventName, eventParams] = event;
-        this.triggerListeners(eventName, eventParams);
+      if (Array.isArray(event[0]) && event[0].length > 0) {
+        const [eventName, ...eventParams] = event[0];
+        this.triggerListeners(eventName, ...eventParams);
       }
     });
   }
-  triggerListeners(eventName, params) {
+  triggerListeners(eventName, ...args) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
-      eventListeners.forEach((listener) => listener(params));
+      eventListeners.forEach((listener) => listener(...args));
     }
   }
   on(eventName, listener) {
@@ -2768,6 +2768,19 @@ var Tracker = class {
 // src/index.ts
 var VERSION = "1.0.0";
 var Samhub = { Pixel, VERSION, DataLayer, Tracker };
+if (typeof window !== "undefined") {
+  window.samhubData = window.samhubData || [];
+  const data_layer = new DataLayer(window.samhubData);
+  let tracker = null;
+  data_layer.on("init", (...args) => {
+    tracker = new Tracker(...args);
+  });
+  data_layer.on("track", (...args) => {
+    if (tracker) {
+      tracker.track(...args);
+    }
+  });
+}
 var index_default = Samhub;
 export {
   DataLayer,

@@ -1,6 +1,5 @@
 type EventName = string;
-type EventParams = Record<string, any>;
-type EventListener = (params: EventParams) => void;
+type EventListener = (...args: any) => void;
 
 export default class DataLayer {
   private listeners: Map<EventName, EventListener[]> = new Map();
@@ -18,9 +17,9 @@ export default class DataLayer {
       const result = originalPush.apply(this.dataLayer, args);
 
       // Process the event
-      if (Array.isArray(args[0]) && args[0].length === 2) {
-        const [eventName, eventParams] = args[0];
-        this.triggerListeners(eventName, eventParams);
+      if (Array.isArray(args[0]) && args[0].length > 0) {
+        const [eventName, ...eventParams] = args[0];
+        this.triggerListeners(eventName, ...eventParams);
       }
 
       return result;
@@ -28,17 +27,17 @@ export default class DataLayer {
 
     // Process any existing events in the array
     this.dataLayer.forEach((event: any) => {
-      if (Array.isArray(event) && event.length === 2) {
-        const [eventName, eventParams] = event;
-        this.triggerListeners(eventName, eventParams);
+      if (Array.isArray(event[0]) && event[0].length > 0) {
+        const [eventName, ...eventParams] = event[0];
+        this.triggerListeners(eventName, ...eventParams);
       }
     });
   }
 
-  private triggerListeners(eventName: EventName, params: EventParams) {
+  private triggerListeners(eventName: EventName, ...args: any) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
-      eventListeners.forEach(listener => listener(params));
+      eventListeners.forEach(listener => listener(...args));
     }
   }
 
